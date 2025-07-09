@@ -1,6 +1,9 @@
 const User = require('../models/User.js');
 const Chat = require('../models/Chat.js');
 const jwt = require('jsonwebtoken');
+const pubsub = require('../utils/PubSub.js');
+
+const MESSAGE_SENT = 'MESSAGE_SENT';
 
 module.exports = {
   Query: {
@@ -86,6 +89,11 @@ module.exports = {
 
       populatedChat.createdAt = populatedChat.sentAt;
 
+      pubsub.publish(MESSAGE_SENT, {
+        messageSent: populatedChat,
+        receiverId: populatedChat.receiver.id
+      });
+
       return populatedChat;
     },
 
@@ -132,6 +140,20 @@ module.exports = {
         success: true,
         message: "Message deleted successfully"
       };
+    },
+   
+  },
+   Subscription: {
+      messageSent: {
+        subscribe: (_, { receiverId }) =>
+          pubsub.asyncIterator(MESSAGE_SENT),
+        resolve: (payload, args) => {
+          if (payload.receiverId !== args.receiverId) {
+            return null;
+          }
+          return payload.messageSent;
+        },
+      }
     }
-  }
-};
+}
+  

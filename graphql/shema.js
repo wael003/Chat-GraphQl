@@ -53,8 +53,8 @@ const schema = gql(`
   }
 
   type Subscription {
-    messageSent: Chat!
-  }
+  messageSent(receiverId: ID!): Chat!
+}
 `);
 
 module.exports = schema;
